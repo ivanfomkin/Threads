@@ -30,7 +30,7 @@ public class Test extends TestCase {
 
 
         System.out.println("Bank balance before start: " + sumAtAccountsBeforeTransactions);
-        System.out.println("Bank balance after start: " + sumAtAccountsAfterTransactions);
+        System.out.println("Bank balance after transactions: " + sumAtAccountsAfterTransactions);
         assertEquals(sumAtAccountsBeforeTransactions, sumAtAccountsAfterTransactions);
 
     }
