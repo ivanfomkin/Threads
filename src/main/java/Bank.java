@@ -14,40 +14,18 @@ public class Bank {
         if (amount < 50_000) return false; //Если сумма менее 50к, но кто-то вызвал этот метод - вернём false
         Account from = accounts.get(fromAccountNum);
         Account to = accounts.get(toAccountNum);
-        if (fromAccountNum.compareTo(toAccountNum) < 0) { //Пытаемся сделать synchronized
-            synchronized (from) {
-                synchronized (to) {
-                    from.setOnCheck(true);
-                    from.setOnCheck(true);
-                }
-            }
-        } else {
-            synchronized (to) {
-                synchronized (from) {
-                    from.setOnCheck(true);
-                    from.setOnCheck(true);
-                }
-            }
-        }
+
+        from.setOnCheck(true);
+        from.setOnCheck(true);
+
 
         //Закомментим задержку, а то очень долго ждать, пока программа завершится
 //        Thread.sleep(1000);
         boolean result = random.nextBoolean();
-        if (fromAccountNum.compareTo(toAccountNum) < 0) { //И тут пытаемся избежать взаимной блокировки
-            synchronized (from) {
-                synchronized (to) {
-                    from.setOnCheck(false);
-                    to.setOnCheck(false);
-                }
-            }
-        } else {
-            synchronized (to) {
-                synchronized (from) {
-                    to.setOnCheck(false);
-                    from.setOnCheck(false);
-                }
-            }
-        }
+
+        from.setOnCheck(false);
+        to.setOnCheck(false);
+
         return result;
     }
 
@@ -78,11 +56,25 @@ public class Bank {
 
                         if (fromAccount.canDebit(amount)) { //Тут пробуем сделать synchronized
 
+                            /**
+                             * Ниже поместил сам перевод и метод проверки СБ
+                             * в общие synchronized-блоки
+                             */
                             if (fromAccountNum.compareTo(toAccountNum) < 0) {
                                 synchronized (fromAccount) {
                                     synchronized (toAccount) {
                                         fromAccount.debit(amount);
                                         toAccount.deposit(amount);
+                                        if (amount > 50_000) {
+                                            try {
+                                                if (isFraud(fromAccountNum, toAccountNum, amount)) {
+                                                    fromAccount.lock();
+                                                    toAccount.lock();
+                                                }
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
                                     }
                                 }
 
@@ -91,33 +83,19 @@ public class Bank {
                                     synchronized (fromAccount) {
                                         toAccount.deposit(amount);
                                         fromAccount.debit(amount);
-                                    }
-                                }
-
-                            }
-                            if (amount > 50_000) {
-                                try {
-                                    if (isFraud(fromAccountNum, toAccountNum, amount)) { //Тут тоже пробуем сделать synchronized
-                                        if (fromAccountNum.compareTo(toAccountNum) < 0) {
-                                            synchronized (fromAccount) {
-                                                synchronized (toAccount) {
-                                                    fromAccount.lock();
-                                                    toAccount.lock();
-                                                }
-                                            }
-                                        } else {
-                                            synchronized (toAccount) {
-                                                synchronized (fromAccount) {
+                                        if (amount > 50_000) {
+                                            try {
+                                                if (isFraud(fromAccountNum, toAccountNum, amount)) {
                                                     toAccount.lock();
                                                     fromAccount.lock();
                                                 }
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
                                             }
                                         }
-
                                     }
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
                                 }
+
                             }
                         } else {
 //                        System.out.println("You can't debit this sum");
