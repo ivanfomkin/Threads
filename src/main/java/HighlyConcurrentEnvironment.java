@@ -16,7 +16,7 @@ public class HighlyConcurrentEnvironment implements Runnable {
 
     @Override
     public void run() {
-        for (int i = 0; i < 500_000; i++) { //Сделаем 500_000 транзакций на поток
+        for (int i = 0; i < 1_000_000; i++) { //Сделаем 500_000 транзакций на поток
             //Получаем случайный номер аккаутна
             String randomAccNumber = String.valueOf((int) (Math.random() * accounts.values().size()));
             //Пробежимся по всем аккаунтам
