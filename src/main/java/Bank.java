@@ -65,16 +65,6 @@ public class Bank {
                                     synchronized (toAccount) {
                                         fromAccount.debit(amount);
                                         toAccount.deposit(amount);
-                                        if (amount > 50_000) {
-                                            try {
-                                                if (isFraud(fromAccountNum, toAccountNum, amount)) {
-                                                    fromAccount.lock();
-                                                    toAccount.lock();
-                                                }
-                                            } catch (InterruptedException e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
                                     }
                                 }
 
@@ -83,19 +73,19 @@ public class Bank {
                                     synchronized (fromAccount) {
                                         toAccount.deposit(amount);
                                         fromAccount.debit(amount);
-                                        if (amount > 50_000) {
-                                            try {
-                                                if (isFraud(fromAccountNum, toAccountNum, amount)) {
-                                                    toAccount.lock();
-                                                    fromAccount.lock();
-                                                }
-                                            } catch (InterruptedException e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
                                     }
                                 }
 
+                            }
+                            if (amount > 50_000) { //Тут проверяем на мошенничество
+                                try {
+                                    if (isFraud(fromAccountNum, toAccountNum, amount)) {
+                                        fromAccount.lock();
+                                        toAccount.lock();
+                                    }
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         } else {
 //                        System.out.println("You can't debit this sum");
