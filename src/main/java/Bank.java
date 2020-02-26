@@ -65,6 +65,13 @@ public class Bank {
                                     synchronized (toAccount) {
                                         fromAccount.debit(amount);
                                         toAccount.deposit(amount);
+                                        try {
+                                            if (amount > 50_000 && isFraud(fromAccountNum, toAccountNum, amount)) {
+                                                lockAccounts(fromAccount, toAccount);
+                                            }
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
                                     }
                                 }
 
@@ -73,9 +80,15 @@ public class Bank {
                                     synchronized (fromAccount) {
                                         toAccount.deposit(amount);
                                         fromAccount.debit(amount);
+                                        try {
+                                            if (amount > 50_000 && isFraud(fromAccountNum, toAccountNum, amount)) {
+                                                lockAccounts(toAccount, fromAccount);
+                                            }
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
                                     }
                                 }
-
                             }
                             if (amount > 50_000) { //Тут проверяем на мошенничество
                                 try {
@@ -136,4 +149,12 @@ public class Bank {
         return calculateBankBalance();
     }
 
+    private void lockAccounts(Account first, Account second) { //Метод будет синхронить блокировку аккаунтов
+        synchronized (first) {
+            synchronized (second) {
+                first.lock();
+                second.lock();
+            }
+        }
+    }
 }
