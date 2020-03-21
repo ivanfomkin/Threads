@@ -57,47 +57,20 @@ public class Bank {
                         if (fromAccount.canDebit(amount)) { //Тут пробуем сделать synchronized
 
                             /**
-                             * Ниже поместил сам перевод и метод проверки СБ
-                             * в общие synchronized-блоки
+                             * Ниже поместил метод doTransfer в блоки синхронизации
                              */
                             if (fromAccountNum.compareTo(toAccountNum) < 0) {
                                 synchronized (fromAccount) {
                                     synchronized (toAccount) {
-                                        fromAccount.debit(amount);
-                                        toAccount.deposit(amount);
-                                        try {
-                                            if (amount > 50_000 && isFraud(fromAccountNum, toAccountNum, amount)) {
-                                                lockAccounts(fromAccount, toAccount);
-                                            }
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
+                                        doTransfer(fromAccount, toAccount, amount);
                                     }
                                 }
 
                             } else {
                                 synchronized (toAccount) {
                                     synchronized (fromAccount) {
-                                        toAccount.deposit(amount);
-                                        fromAccount.debit(amount);
-                                        try {
-                                            if (amount > 50_000 && isFraud(fromAccountNum, toAccountNum, amount)) {
-                                                lockAccounts(toAccount, fromAccount);
-                                            }
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
+                                        doTransfer(fromAccount, toAccount, amount);
                                     }
-                                }
-                            }
-                            if (amount > 50_000) { //Тут проверяем на мошенничество
-                                try {
-                                    if (isFraud(fromAccountNum, toAccountNum, amount)) {
-                                        fromAccount.lock();
-                                        toAccount.lock();
-                                    }
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
                                 }
                             }
                         } else {
@@ -157,4 +130,19 @@ public class Bank {
             }
         }
     }
+
+    private void doTransfer(Account fromAccount, Account toAccount, long amount) { //Метод, который выполняет транзакцию и отправляет аккаунты на блокировку при мошенничестве
+        fromAccount.debit(amount);
+        toAccount.deposit(amount);
+        try {
+            String fromAccountNum = fromAccount.getAccNumber();
+            String toAccountNum = toAccount.getAccNumber();
+            if (amount > 50_000 && isFraud(fromAccountNum, toAccountNum, amount)) {
+                lockAccounts(fromAccount, toAccount);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
